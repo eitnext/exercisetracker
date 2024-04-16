@@ -1,10 +1,25 @@
 const Exercise = require("../models/exerciseModel");
 const User = require("../models/userModel");
 
+const isValidDate = (date) => {
+     return !isNaN(new Date(date))
+}
+ 
+
 exports.createExercise = async (req, res) => {
   try {
     const { _id } = req.params;
-    const { description, duration, date } = req.body;
+    let { description, duration, date } = req.body;
+    
+    if(!date){
+        date = new Date().toDateString()
+    }else if(!isValidDate(date)){
+        return res.status(401).json({
+            status: 'fail',
+            message: 'please input a valid date'
+        })
+    }
+
     const user = await User.findById(_id);
     if (!user) {
       return res.status(401).json({
@@ -12,28 +27,33 @@ exports.createExercise = async (req, res) => {
         message: `user wiht the id ${_id} do not exist!!!🚫`,
       });
     }
+ 
+
     const exercise = new Exercise({
-      userID: _id,
-      date: date ||  new Date().toDateString(),
+      date: new Date(date).toDateString(),
       description,
       duration,
     });
 
+
+    user.exerciseID = exercise.id;
+
+    await user.save();
     await exercise.save();
 
-    const data = await Exercise.findById(exercise.id)
-      .select("-_id -__v")
+    const data = await User.find({ exerciseID: exercise.id })
+      .select("-__v")
       .populate({
-        path: "userID",
-        select: "-__v",
+        path: "exerciseID",
+        select: "-__v -_id",
       });
 
     res.status(200).json({
-      _id: data.userID._id,
-      username: data.userID.username ,
-      date: data.date,
-      duration: data.duration,
-      description: data.description
+      _id: data[0]._id,
+      username: data[0].username,
+      date: data[0].exerciseID.date,
+      duration: data[0].exerciseID.duration,
+      description: data[0].exerciseID.description,
     });
   } catch (error) {
     res.status(500).json({
