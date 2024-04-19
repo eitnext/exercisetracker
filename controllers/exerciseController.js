@@ -30,6 +30,7 @@ exports.createExercise = async (req, res) => {
  
 
     const exercise = new Exercise({
+      userID: user.id,
       date: new Date(date).toDateString(),
       description,
       duration,

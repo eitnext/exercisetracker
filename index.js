@@ -44,7 +44,7 @@ app.use('/api/users', userRoutes);
       await mongoose.connect(DB);
       console.log('DB connected!!!');
     } catch (error) {
-      console.error(err);
+      console.error(error);
       process.exit(1)
       
     }
